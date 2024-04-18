@@ -1,51 +1,59 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import streamlit as st
-from streamlit.logger import get_logger
-
-LOGGER = get_logger(__name__)
-
-
-def run():
-    st.set_page_config(
-        page_title="Hello",
-        page_icon="👋",
-    )
-
-    st.write("# Welcome to Streamlit! 👋")
-
-    st.sidebar.success("Select a demo above.")
-
-    st.markdown(
-        """
-        Streamlit is an open-source app framework built specifically for
-        Machine Learning and Data Science projects.
-        **👈 Select a demo from the sidebar** to see some examples
-        of what Streamlit can do!
-        ### Want to learn more?
-        - Check out [streamlit.io](https://streamlit.io)
-        - Jump into our [documentation](https://docs.streamlit.io)
-        - Ask a question in our [community
-          forums](https://discuss.streamlit.io)
-        ### See more complex demos
-        - Use a neural net to [analyze the Udacity Self-driving Car Image
-          Dataset](https://github.com/streamlit/demo-self-driving)
-        - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
-    """
-    )
+from PIL import Image, ImageOps
+import tensorflow as tf
+from tensorflow.keras.applications.resnet50 import preprocess_input
+import numpy as np
+import cv2
+from tensorflow.keras.models import load_model
 
 
+
+
+# Load the pre-trained model
+model = load_model('c:\\Users\\Kafee\\Downloads\\my_model.h5')
+
+
+st.title("Skin Disease Image Classification")
+
+        
+# Define a function to preprocess the input image
+def preprocess_image(image):
+          # Convert PIL image to numpy array
+          image_array = np.array(image)
+          
+          # Convert RGB to BGR
+          image_array = image_array[:, :, ::-1]
+
+          # Resize the image to 224x224 pixels
+          image_array = cv2.resize(image_array, (224, 224))
+          
+          # Apply the same preprocessing as during training/testing
+          image_array = preprocess_input(np.array([image_array]))  # Add an extra dimension for batching
+
+          return image_array
+
+# Create the Streamlit app
+def main():
+    st.title("Skin Disease Image Classification")
+
+    # Upload an image file
+    uploaded_file = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"])
+    if uploaded_file is not None:
+        image = Image.open(uploaded_file)
+        st.image(image, caption='Uploaded Image', use_column_width=True)
+
+        # Preprocess the image and make a prediction
+        preprocessed_image = preprocess_image(image)
+        prediction = model.predict(preprocessed_image)
+        predicted_class = np.argmax(prediction)
+        class_names = ['BA-Cellulitis','BA-impetigo','FU-athlete-foot','FU-nail-fungus','FU-ringworm','PA-cutaneous-larva-migrans','VI-chickenpox','VI-shingles']
+
+
+        # Display the prediction result
+        st.write(f"You have: {class_names[predicted_class]}! Please visit your Dermatologist")
+        
+
+# Run the Streamlit app
 if __name__ == "__main__":
-    run()
+    main()
+#skindiseasedetectionapp-l71m0roefqr
